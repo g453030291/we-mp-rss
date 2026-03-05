@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import os
 from datetime import datetime
 from core.config import cfg
+from core.redis_client import record_env_exception
 
 class WXArticleFetcher:
     """微信公众号文章获取器
@@ -258,9 +259,9 @@ class WXArticleFetcher:
             self.controller.start_browser()
         
             self.page = self.controller.page
-            print_warning(f"Get:{url} Wait:{self.wait_timeout}")
-            if cfg.get("proxy.deno_url","")!="" and cfg.get("proxy.enable",False):
+            if cfg.get("proxy.deno_url","")!="" and cfg.get("proxy.enabled",False):
                 url=cfg.get("proxy.deno_url")+"/fetch?url="+url
+            print_warning(f"Get:{url} Wait:{self.wait_timeout}")
             self.controller.open_url(url)
             page = self.page
             content=""
@@ -273,6 +274,17 @@ class WXArticleFetcher:
             info["content"]=body
             if "当前环境异常，完成验证后即可继续访问" in body:
                 info["content"]=""
+                # 记录环境异常统计到Redis
+                try:
+                    record_env_exception(
+                        url=url,
+                        mp_name="",
+                        mp_id=""
+                    )
+                    print_warning(f"已记录环境异常统计: {url}")
+                except Exception as e:
+                    print_error(f"记录环境异常统计失败: {e}")
+                
                 Wait(tips="当前环境异常，完成验证后即可继续访问")
                 raise Exception("当前环境异常，完成验证后即可继续访问")
             if "该内容已被发布者删除" in body or "The content has been deleted by the author." in body:
