@@ -11,7 +11,9 @@ on:
       - 'Dockerfile'
       - 'requirements.txt'
       - 'config.example.yaml'
+
 env:
+  # Required repository secrets: DOCKER_HUB_USERNAME, DOCKER_HUB_TOKEN.
   REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -20,7 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -43,15 +44,14 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      - name: Log in to GHCR
-        run: echo  ${{secrets.TOKEN}} | docker login ghcr.io -u  ${{github.actor}} --password-stdin
+          tags: |
+            type=raw,value=latest
+
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-        #   tags: ${{ steps.meta.outputs.tags }}
-          tags: |
-            ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
