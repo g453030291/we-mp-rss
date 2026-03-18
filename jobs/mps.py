@@ -84,7 +84,7 @@ def do_job(mp=None,task:MessageTask=None,isTest=False):
                     "timestamp": datetime.now().isoformat()
                 }]
                 # 异步上报，不阻塞主流程
-                asyncio.create_task(cascade_sync_service.report_task_result(task.id, result_data))
+                asyncio.run(cascade_sync_service.report_task_result(task.id, result_data))
             except Exception as e:
                 print_error(f"上报任务结果失败: {str(e)}")
 
