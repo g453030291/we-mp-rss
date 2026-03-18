@@ -356,19 +356,22 @@ class PlaywrightController:
 
     def cleanup(self):
         """清理所有资源"""
-        try:
-            # 使用线程锁确保线程安全
-            if hasattr(self, 'page') and self.page:
-                self.page.close()
-            if hasattr(self, 'context') and self.context:
-                self.context.close()
-            if hasattr(self, 'browser') and self.browser:
-                self.browser.close()
-            if hasattr(self, 'driver') and self.driver:
-                self.driver.stop()
-            self.isClose = True
-        except Exception as e:
-            print(f"资源清理失败: {str(e)}")
+        for attr_name, method_name in (
+            ("page", "close"),
+            ("context", "close"),
+            ("browser", "close"),
+            ("driver", "stop"),
+        ):
+            resource = getattr(self, attr_name, None)
+            if resource is None:
+                continue
+            try:
+                getattr(resource, method_name)()
+            except Exception as e:
+                print_error(f"{attr_name} 清理失败: {str(e)}")
+            finally:
+                setattr(self, attr_name, None)
+        self.isClose = True
 
     def dict_to_json(self, data_dict):
         try:

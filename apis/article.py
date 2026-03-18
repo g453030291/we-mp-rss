@@ -1,5 +1,6 @@
 import threading
 import time
+from datetime import datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status as fast_status, Query
@@ -95,7 +96,7 @@ def _run_refresh_article_task(task_id: str, article_id: str):
 
         now_seconds = int(time.time())
         now_millis = int(time.time() * 1000)
-        article.updated_at = now_seconds
+        article.updated_at = datetime.utcnow()
         article.updated_at_millis = now_millis
         session.commit()
 

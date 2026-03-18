@@ -119,35 +119,37 @@ class Db:
             session=self.get_session()
             from datetime import datetime
 
-            def _to_unix_seconds(value) -> int:
-                now_ts = int(datetime.now().timestamp())
+            def _to_datetime(value) -> datetime:
+                now = datetime.now()
                 if value is None:
-                    return now_ts
+                    return now
                 if isinstance(value, datetime):
-                    return int(value.timestamp())
+                    return value
                 if isinstance(value, (int, float)):
                     iv = int(value)
-                    return int(iv / 1000) if iv > 1_000_000_000_000 else iv
+                    ts = iv / 1000 if iv > 1_000_000_000_000 else iv
+                    return datetime.fromtimestamp(ts)
                 if isinstance(value, str):
                     raw = value.strip()
                     if not raw:
-                        return now_ts
+                        return now
                     if raw.isdigit():
-                        return _to_unix_seconds(int(raw))
+                        return _to_datetime(int(raw))
                     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
                         try:
-                            return int(datetime.strptime(raw, fmt).timestamp())
+                            return datetime.strptime(raw, fmt)
                         except ValueError:
                             continue
                     try:
-                        return int(datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp())
+                        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
                     except ValueError:
-                        return now_ts
-                return now_ts
+                        return now
+                return now
 
-            def _to_unix_millis(value, fallback_seconds: int) -> int:
+            def _to_unix_millis(value, fallback_datetime: datetime) -> int:
+                fallback_millis = int(fallback_datetime.timestamp() * 1000)
                 if value is None:
-                    return fallback_seconds * 1000
+                    return fallback_millis
                 if isinstance(value, datetime):
                     return int(value.timestamp() * 1000)
                 if isinstance(value, (int, float)):
@@ -156,9 +158,9 @@ class Db:
                 if isinstance(value, str):
                     raw = value.strip()
                     if not raw:
-                        return fallback_seconds * 1000
+                        return fallback_millis
                     if raw.isdigit():
-                        return _to_unix_millis(int(raw), fallback_seconds)
+                        return _to_unix_millis(int(raw), fallback_datetime)
                     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
                         try:
                             return int(datetime.strptime(raw, fmt).timestamp() * 1000)
@@ -167,8 +169,8 @@ class Db:
                     try:
                         return int(datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp() * 1000)
                     except ValueError:
-                        return fallback_seconds * 1000
-                return fallback_seconds * 1000
+                        return fallback_millis
+                return fallback_millis
 
             art = Article(**article_data)
             if art.id:
@@ -185,7 +187,7 @@ class Db:
                 art.created_at=datetime.now()
             if isinstance(art.created_at, str):
                 art.created_at=datetime.strptime(art.created_at ,'%Y-%m-%d %H:%M:%S')
-            art.updated_at = _to_unix_seconds(art.updated_at)
+            art.updated_at = _to_datetime(art.updated_at)
             art.updated_at_millis = _to_unix_millis(art.updated_at_millis, art.updated_at)
             art.content=art.content
 
@@ -314,7 +316,7 @@ class Db:
         try:
             yield session
         finally:
-            session.remove()
+            session.close()
 
 # 全局数据库实例
 DB = Db(User_In_Thread=True)

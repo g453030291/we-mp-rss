@@ -156,7 +156,7 @@ def get_user(username: str) -> Optional[dict]:
         print_error(f"获取用户错误: {str(e)}")
         return None
     finally:
-        session.remove()
+        session.close()
 
 def get_user_by_id(user_id: str) -> Optional[dict]:
     """从数据库通过用户ID获取用户，带缓存功能"""
@@ -188,7 +188,7 @@ def get_user_by_id(user_id: str) -> Optional[dict]:
         print_error(f"通过ID获取用户错误: {str(e)}")
         return None
     finally:
-        session.remove()
+        session.close()
 
 from apis.base import error_response
 def authenticate_user(username: str, password: str) -> Optional[DBUser]:
@@ -345,7 +345,7 @@ def create_ak(
             detail="创建Access Key失败"
         )
     finally:
-        session.remove()
+        session.close()
 
 
 def get_ak_by_key(access_key: str) -> Optional[AccessKey]:
@@ -362,7 +362,7 @@ def get_ak_by_key(access_key: str) -> Optional[AccessKey]:
         print_error(f"获取Access Key错误: {str(e)}")
         return None
     finally:
-        session.remove()
+        session.close()
 
 
 def authenticate_ak(access_key: str, secret_key: str) -> Optional[dict]:
@@ -399,7 +399,7 @@ def authenticate_ak(access_key: str, secret_key: str) -> Optional[dict]:
     except:
         session.rollback()
     finally:
-        session.remove()
+        session.close()
     
     # 解析权限
     try:
@@ -516,7 +516,7 @@ def list_user_aks(user_id: str) -> list:
         print_error(f"获取用户Access Keys错误: {str(e)}")
         return []
     finally:
-        session.remove()
+        session.close()
 
 
 def deactivate_ak(ak_id: str) -> bool:
@@ -535,7 +535,7 @@ def deactivate_ak(ak_id: str) -> bool:
         print_error(f"停用Access Key错误: {str(e)}")
         return False
     finally:
-        session.remove()
+        session.close()
 
 
 def delete_ak(ak_id: str) -> bool:
@@ -554,7 +554,7 @@ def delete_ak(ak_id: str) -> bool:
         print_error(f"删除Access Key错误: {str(e)}")
         return False
     finally:
-        session.remove()
+        session.close()
 
 
 def update_ak(ak_id: str, **kwargs) -> bool:
@@ -582,7 +582,7 @@ def update_ak(ak_id: str, **kwargs) -> bool:
         print_error(f"更新Access Key错误: {str(e)}")
         return False
     finally:
-        session.remove()
+        session.close()
 
 
 def authenticate_cascade_node(api_key: str, secret_key: str) -> Optional[dict]:
@@ -639,4 +639,4 @@ def authenticate_cascade_node(api_key: str, secret_key: str) -> Optional[dict]:
         traceback.print_exc()
         return None
     finally:
-        session.remove()
+        session.close()
