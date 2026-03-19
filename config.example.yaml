@@ -110,6 +110,8 @@ gather:
   api_list_fallback_publish: ${GATHER.API_LIST_FALLBACK_PUBLISH:-True}
   #api 模式正文抓取失败时，自动回退到 web 浏览器抓正文
   api_content_fallback_web: ${GATHER.API_CONTENT_FALLBACK_WEB:-True}
+  #是否在单个公众号任务内复用浏览器，默认False，避免浏览器常驻导致 CPU/内存长时间不释放
+  reuse_browser_per_feed: ${GATHER.REUSE_BROWSER_PER_FEED:-False}
   #是否自动检查未采集文章内容，默认False
   content_auto_check: ${GATHER.CONTENT_AUTO_CHECK:-True}
   #自动检查未采集文章内容的时间间隔 单位秒默认59分钟 允许值 1-59分钟之间 默认59分钟

@@ -11,6 +11,8 @@ from core.print import print_error, print_info, print_warning
 from core.log import logger
 # 继承 BaseGather 类
 class MpsWeb(WxGather):
+    def _should_reuse_browser(self) -> bool:
+        return bool(cfg.get("gather.reuse_browser_per_feed", False))
 
     # 重写 content_extract 方法
     def content_extract(self,  url, fetcher=None, keep_browser=False):
@@ -74,7 +76,8 @@ class MpsWeb(WxGather):
         }
         stop_feed = False
         article_fetcher = None
-        if Gather_Content:
+        reuse_browser = self._should_reuse_browser()
+        if Gather_Content and reuse_browser:
             from driver.wxarticle import WXArticleFetcher
             article_fetcher = WXArticleFetcher()
         # 起始页数
@@ -137,7 +140,7 @@ class MpsWeb(WxGather):
                             item["content"] = self.content_extract(
                                 link,
                                 fetcher=article_fetcher,
-                                keep_browser=True,
+                                keep_browser=reuse_browser,
                             )
                             stats["content_fetched"] += 1
                             super().Wait(1,3,tips=f"{title} 采集完成")

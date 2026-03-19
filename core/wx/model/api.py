@@ -11,6 +11,8 @@ from core.print import print_error, print_info, print_warning
 from core.log import logger
 # 继承 BaseGather 类
 class MpsApi(WxGather):
+    def _should_reuse_browser(self) -> bool:
+        return bool(cfg.get("gather.reuse_browser_per_feed", False))
 
     # 重写 content_extract 方法
     def fetch_content(self, url, fetcher=None, keep_browser=False):
@@ -108,7 +110,8 @@ class MpsApi(WxGather):
             "content_web_fallback": 0,
         }
         stop_feed = False
-        if Gather_Content and cfg.get("gather.api_content_fallback_web", True):
+        reuse_browser = self._should_reuse_browser()
+        if Gather_Content and cfg.get("gather.api_content_fallback_web", True) and reuse_browser:
             from driver.wxarticle import WXArticleFetcher
             fallback_fetcher = WXArticleFetcher()
         # 起始页数
@@ -204,7 +207,7 @@ class MpsApi(WxGather):
                             item["content"], content_source = self.fetch_content(
                                 link,
                                 fetcher=fallback_fetcher,
-                                keep_browser=True,
+                                keep_browser=reuse_browser,
                             )
                             if content_source == "web":
                                 stats["content_web_fallback"] += 1

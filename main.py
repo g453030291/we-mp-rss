@@ -4,6 +4,20 @@ from core.print import print_warning, print_info, print_success
 import threading
 from driver.auth import *
 import os
+
+
+def resolve_uvicorn_workers(enable_background_jobs: bool) -> int:
+    """When background jobs are enabled, keep a single app worker."""
+    workers = int(cfg.get("server.threads", 1) or 1)
+    if enable_background_jobs and workers > 1:
+        print_warning(
+            f"检测到 server.threads={workers}，但当前进程启用了后台任务。"
+            "为避免定时任务/采集任务放大资源占用，自动降级为 1 个 worker。"
+        )
+        return 1
+    return workers
+
+
 if __name__ == '__main__':
     print("环境变量:")
     for k,v in os.environ.items():
@@ -65,7 +79,9 @@ if __name__ == '__main__':
         print_warning("未开启自动修正文章任务")
     print("启动服务器")
     AutoReload=cfg.get("server.auto_reload",False)
-    thread=cfg.get("server.threads",1)
+    enable_background_jobs = bool(cfg.args.job == "True" and cfg.get("server.enable_job",False))
+    enable_background_jobs = enable_background_jobs or bool(cfg.get("gather.content_auto_check",False))
+    thread = resolve_uvicorn_workers(enable_background_jobs)
     reload_dirs = ["apis", "core", "driver", "jobs", "schemas", "tools", "views", "web_ui"]
     uvicorn.run("web:app", host="0.0.0.0", port=int(cfg.get("port",8001)),
             reload=AutoReload,
