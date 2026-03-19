@@ -102,7 +102,7 @@ class Db:
         try:
             art = Article(**article_data)
             if art.id:
-               art.id=f"{str(art.mp_id)}-{art.id}".replace("MP_WXS_","")
+               art.id=self.normalize_article_id(mp_id=art.mp_id, article_id=art.id)
             session=DB.get_session()
             article = session.query(Article).filter(Article.id == art.id).first()
             if article is not None:
@@ -113,6 +113,32 @@ class Db:
             print_error(f"delete article:{str(e)}")
             pass      
         return False
+
+    def normalize_article_id(self, mp_id: str = "", article_id: str = "") -> str:
+        article_id = str(article_id or "").strip()
+        if not article_id:
+            return ""
+
+        mp_prefix = str(mp_id or "").replace("MP_WXS_", "").strip()
+        if mp_prefix and not article_id.startswith(f"{mp_prefix}-"):
+            return f"{mp_prefix}-{article_id}"
+        return article_id
+
+    def article_exists(self, article_id: str = "", mp_id: str = "", url: str = "") -> bool:
+        try:
+            session = self.get_session()
+            filters = []
+            normalized_id = self.normalize_article_id(mp_id=mp_id, article_id=article_id)
+            if normalized_id:
+                filters.append(Article.id == normalized_id)
+            if url:
+                filters.append(Article.url == url)
+            if not filters:
+                return False
+            return session.query(Article.id).filter(or_(*filters)).first() is not None
+        except Exception as e:
+            print_warning(f"check article exists failed: {e}")
+            return False
      
     def add_article(self, article_data: dict,check_exist=False) -> bool:
         try:
@@ -174,7 +200,7 @@ class Db:
 
             art = Article(**article_data)
             if art.id:
-               art.id=f"{str(art.mp_id)}-{art.id}".replace("MP_WXS_","")
+               art.id=self.normalize_article_id(mp_id=art.mp_id, article_id=art.id)
             
             if check_exist:
                 # 检查文章是否已存在

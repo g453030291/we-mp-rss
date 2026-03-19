@@ -93,6 +93,9 @@ class PlaywrightController:
                 self.page is not None)
     def start_browser(self, headless=True, mobile_mode=False, dis_image=True, browser_name=browsers_name, language="zh-CN", anti_crawler=True, proxy_url=""):
         try:
+            if self.is_browser_started():
+                return self.page
+
             # 使用线程锁确保线程安全
             if  str(os.getenv("NOT_HEADLESS",False))=="True":
                 headless = False

@@ -180,6 +180,12 @@ class WxGather:
         print_warning(f"{tips}等待{wait}秒后继续...")
         time.sleep(wait)
 
+    def build_article_db_id(self, article_id: str = "", mp_id: str = "") -> str:
+        return DB.normalize_article_id(mp_id=mp_id, article_id=article_id)
+
+    def article_exists(self, article_id: str = "", mp_id: str = "", url: str = "") -> bool:
+        return DB.article_exists(article_id=article_id, mp_id=mp_id, url=url)
+
     def FillBack(self,CallBack=None,data=None,Ext_Data=None):
         if CallBack is not None:
             if data is not  None:
@@ -201,6 +207,8 @@ class WxGather:
                     art["ext"]=Ext_Data
                     # art.pop("content")
                     self.articles.append(art)
+                    return True
+        return False
 
     #通过公众号码平台接口查询公众号
     def search_Biz(self,kw:str="",limit=10,offset=0):

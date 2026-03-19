@@ -229,7 +229,7 @@ class WXArticleFetcher:
         with ThreadPoolExecutor() as pool:
             future = loop.run_in_executor(pool, self.get_article_content, url)
         return await future
-    def get_article_content(self, url: str) -> Dict:
+    def get_article_content(self, url: str, keep_browser: bool = False) -> Dict:
         """获取单篇文章详细内容
         
         Args:
@@ -395,7 +395,8 @@ class WXArticleFetcher:
             pass
         finally:
             # 确保浏览器资源被正确释放
-            self.Close()
+            if not keep_browser:
+                self.Close()
         return info
     def Close(self):
         """关闭浏览器"""
