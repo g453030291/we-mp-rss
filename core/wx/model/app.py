@@ -47,10 +47,8 @@ class MpsAppMsg(WxGather):
         session=self.session
         # 起始页数
         i = start_page
-        new_articles_found = 0
-        should_stop = False
         while True:
-            if i >= MaxPage or should_stop:
+            if i >= MaxPage:
                 break
             begin = i * count
             params["begin"] = str(begin)
@@ -90,12 +88,6 @@ class MpsAppMsg(WxGather):
                             if "appmsgex" in publish_info:
                                 # info = '"{}","{}","{}","{}"'.format(str(item["aid"]), item['title'], item['link'], str(item['create_time']))
                                 for item in publish_info["appmsgex"]:
-                                    if super().article_exists(Mps_id, item["aid"], item['link']):
-                                        if new_articles_found == 0:
-                                            print(f"[{Mps_title}] 最新文章已存在，提前结束本次抓取")
-                                            should_stop = True
-                                            break
-                                        continue
                                     if Gather_Content:
                                         if not super().HasGathered(item["aid"]):
                                             item["content"] = self.content_extract(item['link'])
@@ -105,10 +97,7 @@ class MpsAppMsg(WxGather):
                                     item["id"] = item["aid"]
                                     item["mp_id"] = Mps_id
                                     if CallBack is not None:
-                                        if super().FillBack(CallBack=CallBack,data=item,Ext_Data={"mp_title":Mps_title,"mp_id":Mps_id}):
-                                            new_articles_found += 1
-                                if should_stop:
-                                    break
+                                        super().FillBack(CallBack=CallBack,data=item,Ext_Data={"mp_title":Mps_title,"mp_id":Mps_id})
                     print(f"第{i+1}页爬取成功\n")
                 # 翻页
                 i += 1

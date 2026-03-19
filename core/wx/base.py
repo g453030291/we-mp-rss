@@ -2,7 +2,6 @@ import requests
 import json
 import re
 import time
-from sqlalchemy import or_
 from core.models import Feed
 from core.db import DB
 from core.models.feed import Feed
@@ -181,34 +180,6 @@ class WxGather:
         print_warning(f"{tips}等待{wait}秒后继续...")
         time.sleep(wait)
 
-    def build_article_db_id(self, mp_id: str, article_id: str) -> str:
-        """Build the normalized article primary key used by the database."""
-        if not article_id:
-            return ""
-        return f"{str(mp_id)}-{article_id}".replace("MP_WXS_", "")
-
-    def article_exists(self, mp_id: str, article_id: str, url: str = "") -> bool:
-        """Check whether an article is already stored before fetching content."""
-        from core.models import Article
-
-        normalized_id = self.build_article_db_id(mp_id, article_id)
-        filters = []
-        if normalized_id:
-            filters.append(Article.id == normalized_id)
-        if url:
-            filters.append(Article.url == url)
-        if not filters:
-            return False
-
-        session = DB.get_session()
-        try:
-            return session.query(Article.id).filter(or_(*filters)).first() is not None
-        except Exception as e:
-            print_warning(f"检查文章是否存在失败: {e}")
-            return False
-        finally:
-            session.close()
-
     def FillBack(self,CallBack=None,data=None,Ext_Data=None):
         if CallBack is not None:
             if data is not  None:
@@ -230,8 +201,6 @@ class WxGather:
                     art["ext"]=Ext_Data
                     # art.pop("content")
                     self.articles.append(art)
-                    return True
-        return False
 
     #通过公众号码平台接口查询公众号
     def search_Biz(self,kw:str="",limit=10,offset=0):
