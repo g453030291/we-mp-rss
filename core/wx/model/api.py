@@ -43,8 +43,10 @@ class MpsApi(WxGather):
         session=self.session
         # 起始页数
         i = start_page
+        new_articles_found = 0
+        should_stop = False
         while True:
-            if i >= MaxPage:
+            if i >= MaxPage or should_stop:
                 break
             begin = i * count
             params["begin"] = str(begin)
@@ -76,18 +78,25 @@ class MpsApi(WxGather):
                     break    
                 if "app_msg_list" in msg:
                     for item in msg["app_msg_list"]:
-                        time.sleep(random.randint(1,3))
+                        time.sleep(random.randint(1,2))
+                        if super().article_exists(Mps_id, item["aid"], item['link']):
+                            if new_articles_found == 0:
+                                print(f"[{Mps_title}] 最新文章已存在，提前结束本次抓取")
+                                should_stop = True
+                                break
+                            continue
                         # info = '"{}","{}","{}","{}"'.format(str(item["aid"]), item['title'], item['link'], str(item['create_time']))
                         if Gather_Content:
                             if not super().HasGathered(item["aid"]):
                                 item["content"] = self.content_extract(item['link'])
-                                super().Wait(3,10,tips=f"{item['title']} 采集完成")
+                                super().Wait(1,3,tips=f"{item['title']} 采集完成")
                         else:
                             item["content"] = ""
                         item["id"] = item["aid"]
                         item["mp_id"] = Mps_id
                         if CallBack is not None:
-                            super().FillBack(CallBack=CallBack,data=item,Ext_Data={"mp_title":Mps_title,"mp_id":Mps_id})
+                            if super().FillBack(CallBack=CallBack,data=item,Ext_Data={"mp_title":Mps_title,"mp_id":Mps_id}):
+                                new_articles_found += 1
                     print(f"第{i+1}页爬取成功\n")
                 # 翻页
                 i += 1

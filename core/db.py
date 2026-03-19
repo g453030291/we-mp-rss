@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Engine,Text,event, inspect, text
+from sqlalchemy import create_engine, Engine,Text,event, inspect, text, or_
 from sqlalchemy.orm import sessionmaker, declarative_base,scoped_session
 from sqlalchemy import Column, Integer, String, DateTime
 from typing import Optional, List
@@ -178,7 +178,9 @@ class Db:
             
             if check_exist:
                 # 检查文章是否已存在
-                existing_article = session.query(Article).filter(Article.url == art.url or Article.id == art.id).first()
+                existing_article = session.query(Article).filter(
+                    or_(Article.url == art.url, Article.id == art.id)
+                ).first()
                 if existing_article is not None:
                     print_warning(f"Article already exists: {art.id}")
                     return False
@@ -201,6 +203,7 @@ class Db:
             sta=session.commit()
             
         except Exception as e:
+            session.rollback()
             if "UNIQUE" in str(e) or "Duplicate entry" in str(e):
                 print_warning(f"Article already exists: {art.id}")
             else:
